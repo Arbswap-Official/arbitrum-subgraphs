@@ -1,0 +1,110 @@
+specVersion: 0.0.1
+description: subgraph for Arbitrum testnet
+repository: https://github.com/QuantBlock/arbitrum-subgraphs
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: SwapFactory
+    network: ${NETWORK}
+    source:
+      address: "${SWAPFACTORY_ADDRESS}"
+      abi: SwapFactory
+      startBlock: ${SWAPFACTORY_BLOCK}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/swapFactory.ts
+      entities:
+        - Token
+        - Pair
+        - SwapPairFeeInfo
+        - TotalToken
+        - whiteListToken
+      abis:
+        - name: SwapFactory
+          file: ./abis/SwapFactory.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: PairCreated(indexed address,indexed address,address,uint256)
+          handler: handlePairCreated
+templates:
+  - kind: ethereum/contract
+    name: ERC20
+    network: ${NETWORK}
+    source:
+      abi: ERC20
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/mapping.ts
+      entities:
+        - Approval
+      abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Approval(indexed address,indexed address,uint256)
+          handler: handleApproval
+
+  - kind: ethereum/contract
+    name: SwapPair
+    network: ${NETWORK}
+    source:
+      abi: SwapPair
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/mapping.ts
+      entities:
+        - Swap
+        - PairPricesLast
+        - PairPricesMinuter
+        - PairPricesHour
+        - PairPricesDay
+        - PairPricesEvery
+        - PairVolumeMinuter
+        - PairVolumeHour
+        - PairVolumeDay
+        - PairApproval
+        - Transaction
+        - SwapPairFeeInfoByLast
+        - SwapPairFeeInfoByHour
+        - Mint
+        - Burn
+        - Token
+        - TotalToken
+        - TotalLiquidityInSymbolByDay
+        - TokenVolumeHour
+        - TotalVolumeInSymbolByDay
+        - TotalVolumeInSymbolByHour
+        - TokenUSDPriceHour
+        - FreezePair
+        - UserLpTokenAvailable
+        - whiteListToken
+      abis:
+        - name: SwapPair
+          file: ./abis/SwapPair.json
+        - name: SwapFactory
+          file: ./abis/SwapFactory.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Mint(indexed address,uint256,uint256)
+          handler: handleMint
+        - event: Burn(indexed address,uint256,uint256,indexed address)
+          handler: handleBurn
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: Swap(indexed address,uint256,uint256,uint256,uint256,indexed address)
+          handler: handleSwap
+        - event: Sync(uint112,uint112)
+          handler: handleSync
+        - event: Approval(indexed address,indexed address,uint256)
+          handler: handlePairApproval
+        - event: Freeze(indexed address)
+          handler: handleFreeze

@@ -1,0 +1,4 @@
+Dockerfile
+**/subgraph.temp.yaml
+**/node_modules
+**/build

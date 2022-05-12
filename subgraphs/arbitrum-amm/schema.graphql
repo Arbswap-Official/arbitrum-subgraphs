@@ -1,0 +1,495 @@
+type Token @entity {
+  id: ID! # token address
+  symbol: String!
+  name: String!
+  decimals: BigInt!
+  usdPrice: BigDecimal #对于usd的价格,只记录token-usdt pair的有关价格，没有pair就为null，如果该值不为空，优先使用
+  ethPrice: BigDecimal #对于eth的价格
+  liquidity: BigDecimal! #流动性
+  liquidityInUsd: BigDecimal #如果该值不为空，优先使用
+  liquidityInEth: BigDecimal #流动性单位eth，这里不转成usd的原因是eth price一直在变，众多的token不能全部修改
+  timestamp: BigInt! # creation timestamp
+  block: BigInt! # creation block
+  pairBase: [Pair!]! @derivedFrom(field: "token0")
+  pairQuote: [Pair!]! @derivedFrom(field: "token1")
+  freezePairBase: [FreezePair!]! @derivedFrom(field: "token0")
+  freezePairQuote: [FreezePair!]! @derivedFrom(field: "token1")
+  pairPay: [Swap!]! @derivedFrom(field: "pay")
+  pairReceive: [Swap!]! @derivedFrom(field: "receive")
+  volumeToken: [TokenVolumeHour!]! @derivedFrom(field: "token")
+  usdPriceTokenOfHour: [TokenUsdPriceHour!]! @derivedFrom(field: "token")
+  usdPriceTokenOfEvery: [TokenUsdPriceEvery!]! @derivedFrom(field: "token")
+}
+
+type WhiteListToken @entity {
+  id: ID! #token address
+  address: Bytes!
+  usdPrice: BigDecimal! #白名单token对于usd 的价格，一些token将会借鉴于这个转换为usd
+}
+
+type TotalToken @entity {
+  id: ID! #totaltoken
+  tokens: [String!]!
+}
+
+type TotalLiquidityInSymbolByDay @entity {
+  id: ID! #timestampDay-symbol
+  symbol: String!
+  totalValue: BigDecimal!
+  timestampDay: BigInt!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type Pair @entity {
+  id: ID! # Pair address
+  token0: Token!
+  token1: Token!
+  timestamp: BigInt! # creation timestamp
+  block: BigInt! #  creation block
+  token0Price: BigDecimal!
+  token1Price: BigDecimal!
+  reserve0: BigDecimal!
+  reserve1: BigDecimal!
+  supply: BigDecimal!
+  decimals: BigInt!
+
+  #volume
+  totalToken0Volume: BigDecimal!
+  totalToken1Volume: BigDecimal!
+  totalVolumeUsd: BigDecimal!
+
+  swaps: [Swap!]! @derivedFrom(field: "pair")
+  pairPricesLasts: [PairPricesLast!]! @derivedFrom(field: "pair")
+  pairPricesHours: [PairPricesHour!]! @derivedFrom(field: "pair")
+  pairPricesDays: [PairPricesDay!]! @derivedFrom(field: "pair")
+  pairPricesEverys: [PairPricesEvery!]! @derivedFrom(field: "pair")
+
+  #Fee
+  swapPairFeeInfoByLasts: [SwapPairFeeInfoByLast!]! @derivedFrom(field: "pair")
+  swapPairFeeInfoByHours: [SwapPairFeeInfoByHour!]! @derivedFrom(field: "pair")
+
+  #volume
+  pairVolumeHours: [PairVolumeHour!]! @derivedFrom(field: "pair")
+  pairVolumeDays: [PairVolumeDay!]! @derivedFrom(field: "pair")
+  pairApprovals: [PairApproval!]! @derivedFrom(field: "pair")
+
+  userLpTokenAvailables: [UserLpTokenAvailable!]! @derivedFrom(field: "pair")
+}
+
+type FreezePair @entity {
+  id: ID! #pair address
+  pairAddress: Bytes! #pair address
+  token0: Token!
+  token1: Token!
+  token0UsdPrice: BigDecimal! #对于Usd的价格
+  token1UsdPrice: BigDecimal! #对于Usd的价格
+  freezer: Bytes!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type Swap @entity {
+  id: ID! #hash
+  transactionHash: Bytes!
+  sender: Bytes! # format : "address"
+  from: Bytes!
+  pair: Pair!
+  pay: Token!
+  receive: Token!
+  payAmount: BigDecimal!
+  receiveAmount: BigDecimal!
+  amount0In: BigDecimal!
+  amount1In: BigDecimal!
+  amount0Out: BigDecimal!
+  amount1Out: BigDecimal!
+  to: Bytes! # format : "address"
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type SwapPairFeeInfoByLast @entity {
+  id: ID! #pairAddress
+  pair: Pair!
+  nowk: BigDecimal!
+  lastK: BigDecimal!
+  nowToken0Price: BigDecimal!
+  nowToken1Price: BigDecimal!
+  lastToken0Price: BigDecimal!
+  lastToken1Price: BigDecimal!
+  totalFeeValue: BigDecimal! #单位是Usd
+  totalFeeTokenValue: BigDecimal!
+  ethPrice: BigDecimal!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type SwapPairFeeInfoByHour @entity {
+  id: ID! # Hour - pairAddress
+  pair: Pair!
+  k: BigDecimal!
+  totalFeeValue: BigDecimal! #单位是Usd
+  timestampHour: BigInt!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type Approval @entity {
+  id: ID! #hash
+  source: String!
+  sourceAddress: Bytes!
+  transactionHash: Bytes!
+  owner: Bytes!
+  spender: Bytes!
+  value: BigDecimal!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type PairApproval @entity {
+  id: ID! #hash
+  pair: Pair!
+  transactionHash: Bytes!
+  owner: Bytes!
+  spender: Bytes!
+  value: BigDecimal!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type PairPricesLast @entity {
+  id: ID! #address
+  pair: Pair!
+  reserve0: BigDecimal!
+  reserve1: BigDecimal!
+  token0Price: BigDecimal!
+  token1Price: BigDecimal!
+  token0Pricelow: BigDecimal! #token0 price历史最低
+  token1Pricelow: BigDecimal! #token1 price历史最低
+  token0PriceLowTimestamp: BigInt! #token0 price历史最低的时间
+  token1PriceLowTimestamp: BigInt! #token1 price历史最低的时间
+  token0Pricehigh: BigDecimal! #token0 price历史最高
+  token1Pricehigh: BigDecimal! #token1 price历史最高
+  token0PriceHighTimestamp: BigInt! #token0 price历史最高的时间
+  token1PriceHighTimestamp: BigInt! #token1 price历史最高的时间
+  # supply: BigDecimal!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type PairPricesMinuter @entity {
+  id: ID! # timestampMinute add address format: "123-0x...."
+  pair: Pair!
+  timestampMinuter: BigInt!
+  timestamp: BigInt!
+  reserve0: BigDecimal!
+  reserve1: BigDecimal!
+  token0Price: BigDecimal!
+  token1Price: BigDecimal!
+  token0high: BigDecimal!
+  token1high: BigDecimal!
+  token0low: BigDecimal!
+  token1low: BigDecimal!
+  # supply: BigDecimal!
+  block: BigInt!
+}
+
+type PairPricesHour @entity {
+  id: ID! # timestampHour add address format: "123-0x...."
+  pair: Pair!
+  timestampHour: BigInt!
+  timestamp: BigInt!
+  reserve0: BigDecimal!
+  reserve1: BigDecimal!
+  token0Price: BigDecimal!
+  token1Price: BigDecimal!
+  token0high: BigDecimal!
+  token1high: BigDecimal!
+  token0low: BigDecimal!
+  token1low: BigDecimal!
+  # supply: BigDecimal!
+  block: BigInt!
+}
+
+type PairPricesDay @entity {
+  id: ID! # timestampDay add address format: "123-0x...."
+  pair: Pair!
+  timestampDay: BigInt!
+  timestamp: BigInt!
+  reserve0: BigDecimal!
+  reserve1: BigDecimal!
+  token0Price: BigDecimal!
+  token1Price: BigDecimal!
+  token0high: BigDecimal!
+  token1high: BigDecimal!
+  token0low: BigDecimal!
+  token1low: BigDecimal!
+  # supply: BigDecimal!
+  block: BigInt!
+}
+
+type PairPricesEvery @entity {
+  id: ID! # timestamp add address format: "123-0x...."
+  pair: Pair!
+  timestamp: BigInt!
+  reserve0: BigDecimal!
+  reserve1: BigDecimal!
+  token0Price: BigDecimal!
+  token1Price: BigDecimal!
+  token0UsdPrice: BigDecimal #当前时间对于Usd的价格
+  token1UsdPrice: BigDecimal #当前时间对于Usd的价格
+  # supply: BigDecimal!
+  block: BigInt!
+}
+
+type PairVolumeMinuter @entity {
+  id: ID! # timestampMinuter add address format: "123-0x..."
+  timestampMinuter: BigInt!
+  pair: Pair!
+  token0Volume: BigDecimal!
+  token1Volume: BigDecimal!
+  volumeUsd: BigDecimal!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type PairVolumeHour @entity {
+  id: ID! # timestampHour add address format: "123-0x..."
+  timestampHour: BigInt!
+  pair: Pair!
+  token0Volume: BigDecimal!
+  token1Volume: BigDecimal!
+  volumeUsd: BigDecimal!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type PairVolumeDay @entity {
+  id: ID! # timestampDay add address format: "123-0x..."
+  timestampDay: BigInt!
+  pair: Pair!
+  token0Volume: BigDecimal!
+  token1Volume: BigDecimal!
+  volumeUsd: BigDecimal!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type TokenUsdPriceEvery @entity {
+  id: ID! #timestamp-token format: "123-0x...."
+  token: Token!
+  price: BigDecimal!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type TokenUsdPriceHour @entity {
+  id: ID! #timestampHour-token address
+  token: Token!
+  price: BigDecimal!
+  timestampHour: BigInt!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type TokenVolumeHour @entity {
+  id: ID! #timestampHour-token address
+  token: Token!
+  volume: BigDecimal!
+  volumeUsd: BigDecimal!
+  timestampHour: BigInt!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type TotalVolumeInSymbolByDay @entity {
+  id: ID! #timestampDay-symbol
+  symbol: String!
+  totalValue: BigDecimal! #单位Usd
+  timestampDay: BigInt!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type TotalVolumeInSymbolByHour @entity {
+  id: ID! #timestampHour-symbol
+  symbol: String!
+  totalValue: BigDecimal! #单位Usd
+  timestampHour: BigInt!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type Mint @entity {
+  id: ID!
+  transaction: Transaction!
+  timestamp: BigInt!
+  pair: Pair!
+  to: Bytes! #用户地址
+  liquidity: BigDecimal!
+
+  sender: Bytes
+  amount0: BigDecimal
+  amount1: BigDecimal
+  token0Price: BigDecimal
+  token1Price: BigDecimal
+}
+
+type Burn @entity {
+  id: ID!
+  transaction: Transaction!
+  timestamp: BigInt!
+  pair: Pair!
+  to: Bytes!
+  liquidity: BigDecimal!
+
+  sender: Bytes #用户地址
+  amount0: BigDecimal
+  amount1: BigDecimal
+  token0Price: BigDecimal
+  token1Price: BigDecimal
+
+  beComplete: Boolean!
+  #_mintFee
+  feeTo: Bytes
+  feeLiquidity: BigDecimal
+}
+
+type Transaction @entity {
+  id: ID! # txn hash
+  blockNumber: BigInt!
+  timestamp: BigInt!
+
+  mints: [Mint]!
+  burns: [Burn]!
+  swaps: [Swap]!
+}
+
+type UserLpTokenAvailable @entity {
+  id: ID! #user-pairAddress
+  user: Bytes!
+  pair: Pair!
+  amount_BI: BigInt!
+  amount_BD: BigDecimal!
+}
+
+#预留接口
+#staking 部分
+type Pool @entity {
+  id: ID! # poolId
+  token: Bytes!
+  stakingPair: StakingPair
+  token0: Bytes
+  token1: Bytes
+  decimals: BigInt!
+  startBlock: BigInt!
+  endBlock: BigInt!
+  migrationBlock: BigInt!
+  rewardPerBlock: BigInt!
+  totalStakeAmount: BigInt!
+  totalStakeAmount_BD: BigDecimal!
+  accuRewardPerShare: BigInt!
+  accuRewardLastUpdateBlock: BigInt!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type Stake @entity {
+  id: ID! # #hash_indexlog
+  transactionHash: Bytes!
+  token: Bytes!
+  stakingPair: StakingPair
+  staker: Bytes!
+  amount: BigDecimal!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type UnStaked @entity {
+  id: ID! #hash_indexlog
+  transactionHash: Bytes!
+  token: Bytes!
+  stakingPair: StakingPair
+  staker: Bytes!
+  amount: BigDecimal!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type RewardRedeemed @entity {
+  id: ID! #hash
+  transactionHash: Bytes!
+  token: Bytes
+  stakingPair: StakingPair
+  staker: Bytes
+  rewarder: Bytes
+  remainingRewards: BigDecimal!
+  amount: BigDecimal!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+# Record user redeemed reward
+type UserReward @entity {
+  id: ID! # format: poolId _ User
+  poolId: BigInt!
+  token: Bytes!
+  user: Bytes!
+  remainingRewards: BigDecimal! # 剩余rewards
+  redeemableRewards: BigDecimal! #pair pool已经claim 的 数量
+}
+
+#关于staking 的pair
+type StakingPair @entity {
+  id: ID! # pairid
+  token0Address: Bytes!
+  token1Address: Bytes!
+  token0Symbol: String!
+  token1Symbol: String!
+
+  #staking 部分
+  pools: [Pool!]! @derivedFrom(field: "stakingPair")
+  stakes: [Stake!]! @derivedFrom(field: "stakingPair")
+  unStakeds: [UnStaked!]! @derivedFrom(field: "stakingPair")
+  rewardRedeemeds: [RewardRedeemed!]! @derivedFrom(field: "stakingPair")
+}
+
+# Record user data in pool
+type UserPoolData @entity {
+  id: ID! # format: poolId-user
+  user: Bytes!
+  poolId: BigInt!
+  stakeAmount: BigInt!
+  stakeAmount_BD: BigDecimal!
+  pendingReward: BigInt!
+  entryAccuRewardPerShare: BigInt!
+}
+
+# Snapshot of user data in pool at certain block or timestamp
+type UserPoolDataSnapshot @entity {
+  id: ID! # format:user-poolId-timestamp
+  staker: Bytes!
+  token: Bytes!
+  poolId: BigInt!
+  stakeAmount: BigInt!
+  pendingReward: BigInt!
+  entryAccuRewardPerShare: BigInt!
+  redeemedRewards: BigDecimal! #用户已经claim的数量
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+# A snapshot of pool info and data
+type PoolInfoAndDataSnapshot @entity {
+  id: ID! # format:pools-timestamp
+  poolId: BigInt!
+  totalStakeAmount: BigInt!
+  accuRewardPerShare: BigInt!
+  accuRewardLastUpdateBlock: BigInt!
+  startBlock: BigInt!
+  endBlock: BigInt!
+  rewardPerBlock: BigInt!
+  poolToken: Bytes!
+  timestamp: BigInt!
+  block: BigInt!
+}

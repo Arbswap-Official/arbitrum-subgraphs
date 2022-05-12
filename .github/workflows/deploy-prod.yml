@@ -1,0 +1,47 @@
+name: Deploy subgraph to prod
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone Source Code
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          yarn install
+
+      - name: Add execute permission to scripts
+        run: |
+          chmod +x ./scripts/*.sh
+
+      - name: Deploy arbitrum-amm subgraph to hosted service
+        env:
+          GRAPH_DEPLOY_URL: https://api.thegraph.com/deploy/
+          GRAPH_IPFS_URL: https://api.thegraph.com/ipfs/
+          GRAPH_SUBGRAPH_NAME: arbswap/arbswap
+          GRAPH_ACCESS_TOKEN: ${{ secrets.MAINNET_SUBGRAPH_ACCESS_TOKEN }}
+          GRAPH_NETWORK: arbitrum-one
+        run: |
+          yarn envsub ./.env.arbitrum.template.mainnet ./.env.arbitrum.mainnet
+          yarn deploy:arbitrum
+          rm ./.env.arbitrum.mainnet
+
+      # - name: Deploy for AWS node
+      #   env:
+      #     GRAPH_DEPLOY_URL: ${{ secrets.AWS_DEPLOY_URL }}
+      #     GRAPH_IPFS_URL: ${{ secrets.IPFS_URL }}
+      #     GRAPH_ACCESS_TOKEN: ${{ secrets.MAINNET_AWS_SUBGRAPH_ACCESS_TOKEN }}
+      #     GRAPH_SUBGRAPH_NAME: ${{ secrets.AWS_SUBGRAPH_NAME }}
+      #     GRAPH_NETWORK: arbitrum-one
+      #   run: |
+      #     yarn envsub ./.env.arbitrum.template.mainnet ./.env.arbitrum.mainnet
+      #     yarn deploy:arbitrum
+      #     rm ./.env.arbitrum.mainnet
