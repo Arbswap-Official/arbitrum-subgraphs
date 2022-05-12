@@ -1,0 +1,35 @@
+name: Deploy Arbitrum-amm subgraph to arbitrum testnet
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - farm
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone Source Code
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          yarn install
+
+      - name: Add execute permission to scripts
+        run: |
+          chmod +x ./scripts/*.sh
+
+      - name: Deploy arbitrum-amm subgraph to hosted service
+        env:
+          GRAPH_DEPLOY_URL: https://api.thegraph.com/deploy/
+          GRAPH_IPFS_URL: https://api.thegraph.com/ipfs/
+          GRAPH_SUBGRAPH_NAME: tech-arbswap/arbswap-testnet
+          GRAPH_ACCESS_TOKEN: ${{ secrets.TESTNET_SUBGRAPH_ACCESS_TOKEN }}
+          GRAPH_NETWORK: arbitrum-rinkeby
+        run: |
+          yarn envsub ./.env.arbitrum.template.testnet ./.env.arbitrum.testnet
+          yarn deploy:arbitrum:testnet
+          rm ./.env.arbitrum.testnet
