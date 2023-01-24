@@ -11,9 +11,12 @@
     "create:arbitrum:testnet": "env-cmd -f ./.env.arbitrum.testnet ./scripts/create.sh",
     "deploy:arbitrum:testnet": "env-cmd -f ./.env.arbitrum.testnet ./scripts/deploy.sh ./subgraphs/arbitrum-amm",
     "remove:arbitrum:testnet": "env-cmd -f ./.env.arbitrum.testnet ./scripts/remove.sh",
-    "create:arbitrum": "env-cmd -f ./.env.arbitrum.mainnet ./scripts/create.sh",
-    "deploy:arbitrum": "env-cmd -f ./.env.arbitrum.mainnet ./scripts/deploy.sh ./subgraphs/arbitrum-amm",
-    "remove:arbitrum": "env-cmd -f ./.env.arbitrum.mainnet ./scripts/remove.sh"
+    "create:arbitrum:one": "env-cmd -f ./.env.arbitrum.one ./scripts/create.sh",
+    "deploy:arbitrum:one": "env-cmd -f ./.env.arbitrum.one ./scripts/deploy.sh ./subgraphs/arbitrum-amm",
+    "remove:arbitrum:one": "env-cmd -f ./.env.arbitrum.one ./scripts/remove.sh",
+    "create:arbitrum:nova": "env-cmd -f ./.env.arbitrum.nova ./scripts/create.sh",
+    "deploy:arbitrum:nova": "env-cmd -f ./.env.arbitrum.nova ./scripts/deploy.sh ./subgraphs/arbitrum-amm",
+    "remove:arbitrum:nova": "env-cmd -f ./.env.arbitrum.nova ./scripts/remove.sh"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "^0.19.0",
