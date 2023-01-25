@@ -31,7 +31,7 @@ jobs:
           GRAPH_NETWORK: arbitrum-one
         run: |
           yarn envsub ./.env.arbitrum.template.one ./.env.arbitrum.one
-          yarn deploy:arbitrum
+          yarn deploy:arbitrum:one
           rm ./.env.arbitrum.one
 
       # - name: Deploy for AWS node

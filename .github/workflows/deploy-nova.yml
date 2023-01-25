@@ -31,5 +31,5 @@ jobs:
           GRAPH_NETWORK: arbitrum-nova
         run: |
           yarn envsub ./.env.arbitrum.template.nova ./.env.arbitrum.nova
-          yarn deploy:arbitrum
+          yarn deploy:arbitrum:nova
           rm ./.env.arbitrum.nova
